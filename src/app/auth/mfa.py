@@ -12,7 +12,12 @@ def require_recent_mfa(
     token: str = Depends(get_current_token),
 ) -> TokenPayload:
     payload = decode_token(token)
-    if payload.auth_time is None or not {"pwd", "otp"} <= set(payload.amr):
+    methods = set(payload.amr)
+    if (
+        payload.auth_time is None
+        or "otp" not in methods
+        or not ({"pwd", "oidc"} & methods)
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Recent MFA authentication required",
