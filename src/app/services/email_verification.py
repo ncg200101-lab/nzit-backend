@@ -1,6 +1,4 @@
-import hashlib
-import secrets
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy import update
@@ -9,21 +7,15 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.account_action_token import AccountActionToken
 from app.models.user import User
+from app.services.account_action_tokens import (
+    as_utc,
+    generate_account_action_token,
+    hash_account_action_token,
+    utc_now,
+)
 
 EMAIL_VERIFICATION_PURPOSE = "email_verification"
 INVALID_TOKEN_DETAIL = "Invalid or expired verification token"
-
-
-def _utc_now() -> datetime:
-    return datetime.now(UTC)
-
-
-def _as_utc(value: datetime) -> datetime:
-    return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
-
-
-def hash_account_action_token(token: str) -> str:
-    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def issue_email_verification_token(
@@ -34,8 +26,8 @@ def issue_email_verification_token(
     if user is None or user.email_verified_at is not None:
         return None
 
-    now = _utc_now()
-    raw_token = secrets.token_urlsafe(32)
+    now = utc_now()
+    raw_token = generate_account_action_token()
     token = AccountActionToken(
         user_id=user.id,
         purpose=EMAIL_VERIFICATION_PURPOSE,
@@ -75,12 +67,12 @@ def confirm_email_verification(token: str, db: Session) -> None:
         .with_for_update()
         .first()
     )
-    now = _utc_now()
+    now = utc_now()
 
     if (
         stored_token is None
         or stored_token.consumed_at is not None
-        or _as_utc(stored_token.expires_at) <= now
+        or as_utc(stored_token.expires_at) <= now
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
