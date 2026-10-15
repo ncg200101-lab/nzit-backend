@@ -1,4 +1,4 @@
-# FastAPI Production API
+# NZIT BACKEND API
 
 [![CI](https://github.com/HoungDev/fastapi-production-api/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/HoungDev/fastapi-production-api/actions/workflows/ci.yml)
 [![Python 3.13](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)](https://www.python.org/)
